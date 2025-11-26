@@ -29,6 +29,46 @@ pipeline {
                 '''
             }
         }
+
+        stage('Deploy') {
+            steps {
+                echo "Deploying application..."
+                sh '''
+                    mkdir -p python-app-deploy
+                    cp app.py python-app-deploy/
+                '''
+            }
+        }
+
+        stage('Run Application') {
+            steps {
+                echo "Running application..."
+                sh '''
+                    . venv/bin/activate
+                    nohup python3 python-app-deploy/app.py > python-app-deploy/app.log 2>&1 &
+                    echo $! > python-app-deploy/app.pid
+                '''
+            }
+        }
+
+        stage('Test Application') {
+            steps {
+                echo "Testing application..."
+                sh '''
+                    . venv/bin/activate
+                    python3 test_app.py
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed. Check logs.'
+        }
     }
 }
 
